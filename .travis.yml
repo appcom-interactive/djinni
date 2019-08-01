@@ -22,11 +22,15 @@ git:
 
 env:
   global:
-    - BINTRAY_FILE="${TRAVIS_BUILD_DIR}/src/target/scala-2.11/src-assembly-0.1-SNAPSHOT.jar"
-    - BINTRAY_USER=appcom-ci
-    # BINTRAY_KEY
-    - secure: vxrs8H/X8j9Od3pUOuxSFXZlyPsvcAL+eK/CjGCImXTNNfL2qfKtKxgm1hk+zoiD2uOg6QfcDRWMo7ZkXVSO3AGKK04g7W8gSUsd03SbQuhdX1mCVmHo0XPE2x7k37BozOYC8h/agcSsCa4Nt5RsI2hMpdYuCEVuFtWV1/nZ0SrjUXUC7QIRWLYCp8nWZa8lY012KkJ5EL1xxGMwghfKLb0bmjMaD22Zs6hupj0fxROE4hXSuHuk/9arPwOz2uJezoKC+TkQIsm9WA0bqewe7WcLdAPgA+yCy+WAHtI8WzkUJ1GmJfG90j1ai9g+80WO89yjtgU1V4jAt4tvEplWDFGjcbwZVJH5qC0CFXaJDD6J0e9ktA8D3kkbpuyi06i1IWzJ+oFmF+Irc0Rux7Aacc8nTgLpoH4QrJdY2rKYq3eXCs6WBJDE2lGWVcqcXctKQNH6IJRyM1yBDGO9Dl4kj4RbOcHk/Vymiuzp+GzzGBYKszSmkqsNbZbE5b1a7foXKOrNSqfhN6yrALSo98uxy0KWwT60MSPkz9di2769+KK4eHFjU6xQXUrG0iwFlpPxgFyzLgQDzZ86NghaxSUTBcaeUui5Gv+C7e5E49SY2A5c+4C3Y/cajJtGaOfqou00YFnq378XzR/GjmIhpizxs/OePTpWmZIltfRx/04PUgw=
-    - BINTRAY_URL=https://api.bintray.com/content/appcom-interactive/appcom-maven-oss/djinni
+    - TRAVIS_MAVEN_FILE=djinni.jar
+    - TRAVIS_MAVEN_SERVER_ID=appcom-maven-oss
+    - TRAVIS_MAVEN_USER=appcom-ci
+    # TRAVIS_MAVEN_PWD
+    - secure: NkYbC3tXOOcBMPc8RyroiNLt+WajwbSll7RjLd6oCfXBy8O8Au03BtBP6jL7WCSSLxprRXCP+r0IcaAetmz4TO3bK9D7oE2Q467EvjlpOr4SoV1nhFOsDnMxhq4j08LiFY9dOw1QEQWiJAuFjTYuRCGUfRHD4PIB8vdW/6D6sfJa+EhsRoSI6jFhTTNYgEG8nnhwodX0sTzyvoEB4hYmcqH5Cj0hu7pI/AEZcw7bnZDN6THwAcf7aB2zLLr3xPe3XbqHHh8pNG59zSwo+wJGj/pPFIWXF1pe8qN6goQM0K5cq2/3hKJgAqE7Ocm+4mL3kUWf4TVkSRAYWwv+dBtknsitqMCtYsdsVQAXxx70AshPGkOzvH5HGPnmxC3cOngPkJJbB0mg3Q37ysRi8khFDXca7m9O7A5oWo5G+2eleXdAx4uMDgCE95OjP5L7bf9X3EHkilEcVhruCrQubTVevxiCY284uPT17AgNIR+NsJagSaL+8dppSDw6fSdKlOXXY3Ht2HQ2KZTSpOwh4ayN4OdBngntEEZUobiJZW9ypHfrgSyDw+OMsvfAnIZiUF81aw/nLLLF3yhswfqwp7hb8wmrCSr0512EOtBUaQl8c44iQOZq5X+o7vmBtSkmCgX/cYMJqzbTBgbm7AUF516RjNVXlZvMmioL1X8agN+4MCs=
+    - TRAVIS_MAVEN_GROUP_ID="eu.appcom"
+    - TRAVIS_MAVEN_ARTIFACT_ID=djinni
+    - TRAVIS_MAVEN_URL="https://api.bintray.com/maven/appcom-interactive/appcom-maven-oss/djinni"
+    - TRAVIS_MAVEN_VERSION=${TRAVIS_TAG}
 
 ###########################
 #      job lifecycle      #
@@ -34,16 +38,12 @@ env:
 
 install:
 
-  # install java and sbt via sdkman.io
+  # install java, maven and sbt via sdkman.io
   - curl -s "https://get.sdkman.io" | bash
   - source "${HOME}/.sdkman/bin/sdkman-init.sh"
   - sdk install java
   - sdk install sbt
-
-before_script:
-
-  - export BINTRAY_VERSION=${TRAVIS_TAG}
-  - export BINTRAY_TARGET_FILE=djinni-${BINTRAY_VERSION}.jar
+  - sdk install maven
 
 script:
 
@@ -52,10 +52,11 @@ script:
 
   # build the djinni fat file
   - make djinni_jar
+  - cp src/target/scala-2.11/src-assembly-0.1-SNAPSHOT.jar djinni.jar
 
 deploy:
   provider: script
   skip_cleanup: true
-  script: bash .travis/provider/bintray-curl-upload.sh
+  script: bash .travis/provider/maven-upload.sh
   on:
     tags: true
