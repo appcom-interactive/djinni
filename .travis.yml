@@ -1,0 +1,61 @@
+###########################
+#    project specifics    #
+###########################
+
+language: minimal
+dist: bionic
+
+###########################
+#      git specifics      #
+###########################
+
+# Only build travis and tags
+if: branch = travis OR tag IS present
+
+git:
+    submodules: false
+    depth: false
+
+###########################
+#       environment       #
+###########################
+
+env:
+  global:
+    - BINTRAY_FILE="${TRAVIS_BUILD_DIR}/src/target/scala-2.11/src-assembly-0.1-SNAPSHOT.jar"
+    - BINTRAY_USER=appcom-ci
+    # BINTRAY_KEY
+    - secure: vxrs8H/X8j9Od3pUOuxSFXZlyPsvcAL+eK/CjGCImXTNNfL2qfKtKxgm1hk+zoiD2uOg6QfcDRWMo7ZkXVSO3AGKK04g7W8gSUsd03SbQuhdX1mCVmHo0XPE2x7k37BozOYC8h/agcSsCa4Nt5RsI2hMpdYuCEVuFtWV1/nZ0SrjUXUC7QIRWLYCp8nWZa8lY012KkJ5EL1xxGMwghfKLb0bmjMaD22Zs6hupj0fxROE4hXSuHuk/9arPwOz2uJezoKC+TkQIsm9WA0bqewe7WcLdAPgA+yCy+WAHtI8WzkUJ1GmJfG90j1ai9g+80WO89yjtgU1V4jAt4tvEplWDFGjcbwZVJH5qC0CFXaJDD6J0e9ktA8D3kkbpuyi06i1IWzJ+oFmF+Irc0Rux7Aacc8nTgLpoH4QrJdY2rKYq3eXCs6WBJDE2lGWVcqcXctKQNH6IJRyM1yBDGO9Dl4kj4RbOcHk/Vymiuzp+GzzGBYKszSmkqsNbZbE5b1a7foXKOrNSqfhN6yrALSo98uxy0KWwT60MSPkz9di2769+KK4eHFjU6xQXUrG0iwFlpPxgFyzLgQDzZ86NghaxSUTBcaeUui5Gv+C7e5E49SY2A5c+4C3Y/cajJtGaOfqou00YFnq378XzR/GjmIhpizxs/OePTpWmZIltfRx/04PUgw=
+    - BINTRAY_URL=https://api.bintray.com/content/appcom-interactive/appcom-maven-oss/djinni
+
+###########################
+#      job lifecycle      #
+###########################
+
+install:
+
+  # install java and sbt via sdkman.io
+  - curl -s "https://get.sdkman.io" | bash
+  - source "${HOME}/.sdkman/bin/sdkman-init.sh"
+  - sdk install java
+  - sdk install sbt
+
+before_script:
+
+  - export BINTRAY_VERSION=${TRAVIS_TAG}
+  - export BINTRAY_TARGET_FILE=djinni-${BINTRAY_VERSION}.jar
+
+script:
+
+  # show OS and compiler version
+  - uname -a
+
+  # build the djinni fat file
+  - make djinni_jar
+
+deploy:
+  provider: script
+  skip_cleanup: true
+  script: bash .travis/provider/bintray-curl-upload.sh
+  on:
+    tags: true
